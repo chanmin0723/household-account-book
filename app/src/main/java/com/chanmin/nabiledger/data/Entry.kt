@@ -50,12 +50,14 @@ object Categories {
         Category("생활", "🏠"),
         Category("문화·취미", "🎮"),
         Category("의료", "💊"),
+        Category("송금", "💸"),
         Category("기타", "🐾"),
     )
     val income = listOf(
         Category("월급", "💰"),
         Category("용돈", "🎁"),
         Category("부수입", "✨"),
+        Category("받은 돈", "💌"),
         Category("기타 수입", "🐾"),
     )
 

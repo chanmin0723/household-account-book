@@ -16,10 +16,21 @@ object PaymentParser {
     private val timeRe = Regex("""\d{1,2}:\d{2}""")
     private val ws = Regex("""\s+""")
 
-    private val spendKw = listOf("승인", "결제", "출금", "사용", "지불", "구매")
-    private val incomeKw = listOf("입금")
-    /** 이런 말이 있으면 실제 지출이 아니라고 본다 */
-    private val rejectKw = listOf("취소", "거절", "실패", "광고", "예정", "명세서", "청구", "이벤트")
+    private val spendKw = listOf("승인", "결제", "출금", "사용", "지불", "구매", "송금", "보냈", "이체")
+    private val incomeKw = listOf("입금", "받았", "받은 돈")
+    private val transferKw = listOf("송금", "보냈", "이체", "받았", "받은 돈")
+    /** 다른 사람이 나에게 보낸 것: "김*민님이 15,000원을 보냈어요" */
+    private val sentByOther = Regex("""님이\s*[\d,]+\s*원""")
+    /** 송금 상대 이름: "홍길동님에게", "박나비님께", "김*민님이" */
+    private val counterpartRe = Regex("""([^\s,\[\]()]{1,12}?)님(?:에게|께|한테|이|으로부터)""")
+    /**
+     * 이런 말이 있으면 실제 지출/수입이 아니라고 본다.
+     * 충전·내 계좌 이체는 돈이 내 지갑 안에서 옮겨 다닌 것이라 이중 기록을 막기 위해 제외.
+     */
+    private val rejectKw = listOf(
+        "취소", "거절", "실패", "광고", "예정", "명세서", "청구", "이벤트",
+        "충전", "내 계좌", "내계좌", "본인 계좌", "본인계좌",
+    )
     /** 금액 바로 앞에 이런 말이 있으면 그 금액은 건너뜀 (잔액 등) */
     private val notTheAmount = listOf("잔액", "누적", "잔고", "한도", "합계", "포인트", "적립", "할인")
     /** 가게 이름이 아니라 결제 수단/알림 머리말인 단어 */
@@ -34,9 +45,11 @@ object PaymentParser {
         if (text.isEmpty()) return null
         if (rejectKw.any { it in text }) return null
 
-        val isSpend = spendKw.any { it in text }
-        val isIncome = !isSpend && incomeKw.any { it in text }
+        val incoming = incomeKw.any { it in text } || (sentByOther.containsMatchIn(text) && "보냈" in text)
+        val isIncome = incoming && "출금" !in text
+        val isSpend = !isIncome && spendKw.any { it in text }
         if (!isSpend && !isIncome) return null
+        val isTransfer = transferKw.any { it in text }
 
         val m = amountRe.findAll(text).firstOrNull { mr ->
             val before = text.substring(maxOf(0, mr.range.first - 6), mr.range.first)
@@ -45,10 +58,21 @@ object PaymentParser {
         val amount = m.groupValues[1].replace(",", "").toLongOrNull() ?: return null
         if (amount <= 0L || amount > 100_000_000L) return null
 
-        val merchant = merchantOf(text, m).take(30)
-        val category = if (isIncome) "기타 수입" else guessCategory(merchant, text)
+        val counterpart = if (isTransfer) counterpartOf(text) else null
+        val merchant = (counterpart ?: merchantOf(text, m)).take(30)
+        val category = when {
+            isIncome && counterpart != null -> "받은 돈"
+            isIncome -> "기타 수입"
+            counterpart != null -> "송금"
+            else -> guessCategory(merchant, text)
+        }
         return ParsedPayment(amount, merchant, isIncome, category)
     }
+
+    private fun counterpartOf(text: String): String? =
+        counterpartRe.findAll(text)
+            .map { clean(it.groupValues[1]) }
+            .firstOrNull { it.isNotEmpty() && it !in listOf("고객", "회원", "사용자") && it.any { c -> c.isLetter() } }
 
     private val numberish = Regex("""[\d,./:\-()원\s]+""")
 

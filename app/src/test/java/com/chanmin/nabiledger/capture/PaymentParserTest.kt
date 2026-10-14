@@ -81,4 +81,48 @@ class PaymentParserTest {
         assertEquals("기타", PaymentParser.guessCategory("나비문구"))
         assertEquals("교통", PaymentParser.guessCategory("카카오T 택시"))
     }
+
+    // ---------- 송금 ----------
+
+    @Test fun tossSendMoney() {
+        val p = parse("토스\n홍길동님에게 30,000원 보냈어요")!!
+        assertFalse(p.isIncome)
+        assertEquals(30_000L, p.amount)
+        assertEquals("홍길동", p.merchant)
+        assertEquals("송금", p.category)
+    }
+
+    @Test fun kakaoSendMoney() {
+        val p = parse("카카오페이 송금\n박나비님께 5,000원 송금 완료")!!
+        assertFalse(p.isIncome)
+        assertEquals(5_000L, p.amount)
+        assertEquals("박나비", p.merchant)
+        assertEquals("송금", p.category)
+    }
+
+    @Test fun receiveMoneyFromFriend() {
+        val p = parse("카카오페이\n김*민님이 15,000원을 보냈어요")!!
+        assertTrue(p.isIncome)
+        assertEquals(15_000L, p.amount)
+        assertEquals("김*민", p.merchant)
+        assertEquals("받은 돈", p.category)
+    }
+
+    @Test fun bankTransferIn() {
+        val p = parse("[신한] 이체입금 200,000원 홍길동 잔액 1,500,000원")!!
+        assertTrue(p.isIncome)
+        assertEquals(200_000L, p.amount)
+        assertEquals("홍길동", p.merchant)
+    }
+
+    @Test fun bankTransferOut() {
+        val p = parse("[국민] 출금 50,000원 이체 홍길동 잔액 300,000원")!!
+        assertFalse(p.isIncome)
+        assertEquals(50_000L, p.amount)
+    }
+
+    @Test fun topUpAndOwnAccountIgnored() {
+        assertNull(parse("토스머니 50,000원 충전 완료"))
+        assertNull(parse("내 계좌로 100,000원 이체했어요"))
+    }
 }
