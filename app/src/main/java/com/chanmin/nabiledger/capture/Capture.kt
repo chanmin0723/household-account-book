@@ -56,6 +56,7 @@ object Capture {
             )
             LedgerRepository.logCapture(raw, "확인 대기: $label")
             Notifier.postPendingCapture(ctx, p)
+            if (!p.isIncome) Notifier.maybeAlertOverspend(ctx)
         }
     }
 

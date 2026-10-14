@@ -125,4 +125,11 @@ class PaymentParserTest {
         assertNull(parse("토스머니 50,000원 충전 완료"))
         assertNull(parse("내 계좌로 100,000원 이체했어요"))
     }
+
+    @Test fun mmsTitleWrapperStripped() {
+        val p = parse("[Web발신]\n<제목: [LG U+]>\n1,952원 결제 완료")!!
+        assertEquals(1_952L, p.amount)
+        assertEquals("LG U+", p.merchant)
+        assertEquals("생활", p.category)
+    }
 }

@@ -112,7 +112,7 @@ object Notifier {
         if (!s.overspendAlert) return
         val today = LocalDate.now().toEpochDay()
         if (LedgerRepository.overspendNotifiedDay() == today) return
-        val entries = LedgerRepository.entries.value
+        val entries = LedgerRepository.statsEntries()
         if (!Stats.isOverspent(entries, today, s.threshold)) return
         val v = Stats.verdict(entries, today, s.threshold)
         post(ctx, CH_OVERSPEND, ID_OVERSPEND, "평소보다 많이 썼다냥! 😿", v.message)

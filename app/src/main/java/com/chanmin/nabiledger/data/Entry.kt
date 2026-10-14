@@ -92,6 +92,12 @@ data class PendingCapture(
     val isIncome: Boolean,
     val postedAt: Long,
 ) {
+    /** 합계 계산용: 확인 전이어도 쓴 돈은 바로 오늘/이번 달 지출에 반영 */
+    fun asEntry(): Entry = Entry(
+        id = -id, epochDay = epochDay, amount = amount, category = category,
+        memo = merchant, isIncome = isIncome, createdAt = postedAt,
+    )
+
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id); put("day", epochDay); put("amount", amount); put("merchant", merchant)
         put("category", category); put("income", isIncome); put("postedAt", postedAt)

@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -130,7 +131,8 @@ private fun NabiRoot(resumeTick: Int) {
         containerColor = Nabi.Cream,
         topBar = {
             Row(
-                Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().background(Nabi.Cream).statusBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("🐾 나비 가계부", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Nabi.Brown)

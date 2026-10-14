@@ -58,12 +58,15 @@ fun HomeScreen(
 ) {
     val todayDate = LocalDate.now()
     val today = todayDate.toEpochDay()
-    val verdict = Stats.verdict(entries, today, settings.threshold)
-    val spent = Stats.expenseOn(entries, today)
-    val usual = Stats.usualDaily(entries, today)
-    val monthSpent = Stats.expenseBetween(entries, todayDate.withDayOfMonth(1).toEpochDay(), today)
-    val todayEntries = entries.filter { it.epochDay == today }.sortedByDescending { it.createdAt }
     val pending by LedgerRepository.pending.collectAsState()
+    // 확인 대기 중인 결제 알림도 쓴 돈이니까 합계에 바로 반영
+    val all = LedgerRepository.withPending(entries, pending)
+    val waiting = pending.filter { !it.isIncome && it.epochDay == today }
+    val verdict = Stats.verdict(all, today, settings.threshold)
+    val spent = Stats.expenseOn(all, today)
+    val usual = Stats.usualDaily(all, today)
+    val monthSpent = Stats.expenseBetween(all, todayDate.withDayOfMonth(1).toEpochDay(), today)
+    val todayEntries = entries.filter { it.epochDay == today }.sortedByDescending { it.createdAt }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -87,6 +90,14 @@ fun HomeScreen(
                 )
                 StatTile("평소 하루", usual?.let { Fmt.won(it) } ?: "모으는 중", Modifier.weight(1f))
                 StatTile("이번 달", Fmt.won(monthSpent), Modifier.weight(1f))
+            }
+        }
+        if (waiting.isNotEmpty()) {
+            item {
+                Text(
+                    "※ 확인 대기 중인 결제 ${waiting.size}건(${Fmt.won(waiting.sumOf { it.amount })})도 오늘 지출에 포함했어요",
+                    fontSize = 11.sp, color = Nabi.BrownSoft, modifier = Modifier.padding(horizontal = 4.dp)
+                )
             }
         }
         if (usual != null && usual > 0L) {

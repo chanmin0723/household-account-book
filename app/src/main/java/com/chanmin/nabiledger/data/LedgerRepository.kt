@@ -74,6 +74,12 @@ object LedgerRepository {
     }
 
     /** 기존 기록 수정 (id·createdAt 유지) */
+    /** 통계용 목록 = 기록 + 확인 대기 중인 결제 알림 */
+    fun statsEntries(): List<Entry> = withPending(_entries.value, _pending.value)
+
+    fun withPending(entries: List<Entry>, pending: List<PendingCapture>): List<Entry> =
+        if (pending.isEmpty()) entries else entries + pending.map { it.asEntry() }
+
     @Synchronized
     fun update(entry: Entry): Entry {
         val list = _entries.value.map { if (it.id == entry.id) entry else it }

@@ -36,7 +36,7 @@ object LiveStatus {
         started = true
         val app = context.applicationContext
         scope.launch {
-            combine(LedgerRepository.entries, LedgerRepository.settings) { _, _ -> Unit }
+            combine(LedgerRepository.entries, LedgerRepository.pending, LedgerRepository.settings) { _, _, _ -> Unit }
                 .collect { update(app) }
         }
     }
@@ -57,7 +57,7 @@ object LiveStatus {
             nm.cancel(ID)
             return
         }
-        val entries = LedgerRepository.entries.value
+        val entries = LedgerRepository.statsEntries()
         val todayDate = LocalDate.now()
         val today = todayDate.toEpochDay()
         val spent = Stats.expenseOn(entries, today)

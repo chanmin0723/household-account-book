@@ -87,7 +87,10 @@ object PaymentParser {
             notMerchant.none { it in w }
 
     private fun clean(s: String): String =
-        s.trim().trim('[', ']', '(', ')', '.', ',', ':', '-', '·', '|').replace(ws, " ").trim()
+        s.replace("제목:", "").replace("제목 :", "")
+            .trim().trim('<', '>', '[', ']', '(', ')', '.', ',', ':', '-', '·', '|', ' ')
+            .trim('<', '>', '[', ']', ' ')
+            .replace(ws, " ").trim()
 
     private fun merchantOf(text: String, amount: MatchResult): String {
         // 1) "스타벅스 강남점에서 4,500원 결제"
