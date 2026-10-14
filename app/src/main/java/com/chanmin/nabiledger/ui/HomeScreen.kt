@@ -51,6 +51,7 @@ fun HomeScreen(
     settings: AppSettings,
     padding: PaddingValues,
     onDelete: (Entry) -> Unit,
+    onToggleHidden: (Entry) -> Unit,
 ) {
     val todayDate = LocalDate.now()
     val today = todayDate.toEpochDay()
@@ -87,7 +88,7 @@ fun HomeScreen(
         if (todayEntries.isEmpty()) {
             item { EmptyNote("아직 오늘 기록이 없다냥.\n아래 + 버튼으로 적어줘냥 🐾") }
         } else {
-            items(todayEntries, key = { it.id }) { EntryRow(it, onDelete) }
+            items(todayEntries, key = { it.id }) { EntryRow(it, onDelete, onToggleHidden) }
         }
     }
 }

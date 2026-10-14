@@ -11,6 +11,8 @@ data class Entry(
     val memo: String,
     val isIncome: Boolean,
     val createdAt: Long,
+    /** true면 이 기기에만 남고 친구에게 공유되지 않음 */
+    val hidden: Boolean = false,
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
@@ -20,6 +22,7 @@ data class Entry(
         put("memo", memo)
         put("income", isIncome)
         put("createdAt", createdAt)
+        put("hidden", hidden)
     }
 
     companion object {
@@ -31,6 +34,7 @@ data class Entry(
             memo = o.optString("memo", ""),
             isIncome = o.optBoolean("income", false),
             createdAt = o.optLong("createdAt", 0L),
+            hidden = o.optBoolean("hidden", false),
         )
     }
 }

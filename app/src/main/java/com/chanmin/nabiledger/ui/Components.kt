@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -90,14 +91,20 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier, accent
     }
 }
 
+/** onDelete/onToggleHidden 이 null이면(친구 내역 보기) 버튼을 숨긴다 */
 @Composable
-fun EntryRow(e: Entry, onDelete: (Entry) -> Unit) {
+fun EntryRow(
+    e: Entry,
+    onDelete: ((Entry) -> Unit)? = null,
+    onToggleHidden: ((Entry) -> Unit)? = null,
+) {
     Card(
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = if (e.hidden) Nabi.Peach else Color.White),
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
+            Modifier.fillMaxWidth().padding(start = 12.dp, top = 8.dp, bottom = 8.dp,
+                end = if (onDelete == null) 12.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -109,7 +116,10 @@ fun EntryRow(e: Entry, onDelete: (Entry) -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(e.category, fontWeight = FontWeight.SemiBold, color = Nabi.Ink)
+                Text(
+                    e.category + if (e.hidden) "  🙈" else "",
+                    fontWeight = FontWeight.SemiBold, color = Nabi.Ink
+                )
                 if (e.memo.isNotBlank()) {
                     Text(
                         e.memo, style = MaterialTheme.typography.bodySmall, color = Nabi.BrownSoft,
@@ -122,8 +132,19 @@ fun EntryRow(e: Entry, onDelete: (Entry) -> Unit) {
                 color = if (e.isIncome) Nabi.MintDeep else Nabi.Brown,
                 fontWeight = FontWeight.Bold,
             )
-            IconButton(onClick = { onDelete(e) }) {
-                Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = Nabi.BrownSoft.copy(alpha = 0.5f))
+            if (onToggleHidden != null) {
+                IconButton(onClick = { onToggleHidden(e) }) {
+                    Icon(
+                        Icons.Filled.Lock,
+                        contentDescription = if (e.hidden) "친구에게 보이기" else "친구에게 숨기기",
+                        tint = if (e.hidden) Nabi.OrangeDeep else Nabi.BrownSoft.copy(alpha = 0.3f)
+                    )
+                }
+            }
+            if (onDelete != null) {
+                IconButton(onClick = { onDelete(e) }) {
+                    Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = Nabi.BrownSoft.copy(alpha = 0.5f))
+                }
             }
         }
     }

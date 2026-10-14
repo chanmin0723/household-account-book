@@ -56,14 +56,25 @@ object LedgerRepository {
     }
 
     @Synchronized
-    fun add(day: Long, amount: Long, category: String, memo: String, isIncome: Boolean): Entry {
+    fun add(day: Long, amount: Long, category: String, memo: String, isIncome: Boolean, hidden: Boolean = false): Entry {
         val now = System.currentTimeMillis()
         val id = maxOf(now, (_entries.value.maxOfOrNull { it.id } ?: 0L) + 1)
-        val entry = Entry(id, day, amount, category, memo.trim(), isIncome, now)
+        val entry = Entry(id, day, amount, category, memo.trim(), isIncome, now, hidden)
         val list = _entries.value + entry
         saveEntries(list)
         _entries.value = list
         return entry
+    }
+
+    @Synchronized
+    fun setHidden(id: Long, hidden: Boolean): Entry? {
+        var changed: Entry? = null
+        val list = _entries.value.map {
+            if (it.id == id) it.copy(hidden = hidden).also { e -> changed = e } else it
+        }
+        saveEntries(list)
+        _entries.value = list
+        return changed
     }
 
     @Synchronized

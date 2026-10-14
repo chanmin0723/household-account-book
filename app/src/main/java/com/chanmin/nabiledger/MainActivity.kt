@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -46,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.chanmin.nabiledger.cloud.Cloud
 import com.chanmin.nabiledger.data.Entry
 import com.chanmin.nabiledger.data.LedgerRepository
 import com.chanmin.nabiledger.logic.Fmt
@@ -53,6 +55,7 @@ import com.chanmin.nabiledger.logic.Stats
 import com.chanmin.nabiledger.notify.Notifier
 import com.chanmin.nabiledger.notify.ReminderScheduler
 import com.chanmin.nabiledger.ui.AddEntryDialog
+import com.chanmin.nabiledger.ui.FriendsScreen
 import com.chanmin.nabiledger.ui.HistoryScreen
 import com.chanmin.nabiledger.ui.HomeScreen
 import com.chanmin.nabiledger.ui.Nabi
@@ -67,6 +70,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LedgerRepository.init(this)
+        Cloud.init(this)
         enableEdgeToEdge()
         setContent {
             NabiTheme { NabiRoot(resumeTick.intValue) }
@@ -97,9 +101,21 @@ private fun NabiRoot(resumeTick: Int) {
         if (Build.VERSION.SDK_INT >= 33 && !Notifier.canPost(ctx)) {
             permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+        Cloud.syncAll(LedgerRepository.entries.value)
     }
 
-    val titles = listOf("오늘", "달력", "설정")
+    val toggleHidden: (Entry) -> Unit = { e ->
+        LedgerRepository.setHidden(e.id, !e.hidden)?.let { changed ->
+            Cloud.push(changed)
+            scope.launch {
+                snackbar.showSnackbar(
+                    if (changed.hidden) "🙈 친구에게 숨겼다냥" else "👀 친구에게 보이게 했다냥"
+                )
+            }
+        }
+    }
+
+    val titles = listOf("오늘", "달력", "친구", "설정")
     Scaffold(
         containerColor = Nabi.Cream,
         topBar = {
@@ -112,7 +128,7 @@ private fun NabiRoot(resumeTick: Int) {
         },
         bottomBar = {
             NavigationBar(containerColor = Nabi.Peach) {
-                listOf(Icons.Filled.Home, Icons.Filled.DateRange, Icons.Filled.Settings)
+                listOf(Icons.Filled.Home, Icons.Filled.DateRange, Icons.Filled.Face, Icons.Filled.Settings)
                     .forEachIndexed { i, icon ->
                         NavigationBarItem(
                             selected = tab == i,
@@ -131,7 +147,7 @@ private fun NabiRoot(resumeTick: Int) {
             }
         },
         floatingActionButton = {
-            if (tab != 2) {
+            if (tab <= 1) {
                 FloatingActionButton(
                     onClick = { showAdd = true },
                     containerColor = Nabi.Orange,
@@ -142,13 +158,19 @@ private fun NabiRoot(resumeTick: Int) {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         when (tab) {
-            0 -> HomeScreen(entries, settings, padding, onDelete = { pendingDelete = it })
+            0 -> HomeScreen(
+                entries, settings, padding,
+                onDelete = { pendingDelete = it },
+                onToggleHidden = toggleHidden,
+            )
             1 -> HistoryScreen(
                 entries, settings, padding,
                 selectedDay = selectedDay,
                 onSelectDay = { selectedDay = it },
                 onDelete = { pendingDelete = it },
+                onToggleHidden = toggleHidden,
             )
+            2 -> FriendsScreen(padding)
             else -> SettingsScreen(settings, resumeTick, padding)
         }
     }
@@ -158,9 +180,10 @@ private fun NabiRoot(resumeTick: Int) {
         AddEntryDialog(
             initialDay = if (tab == 1) selectedDay else today,
             onDismiss = { showAdd = false },
-            onSave = { day, amount, category, memo, isIncome ->
+            onSave = { day, amount, category, memo, isIncome, hidden ->
                 val before = Stats.isOverspent(LedgerRepository.entries.value, today, settings.threshold)
-                LedgerRepository.add(day, amount, category, memo, isIncome)
+                val added = LedgerRepository.add(day, amount, category, memo, isIncome, hidden)
+                Cloud.push(added)
                 showAdd = false
                 if (!isIncome && day == today) {
                     val after = Stats.isOverspent(LedgerRepository.entries.value, today, settings.threshold)
@@ -182,6 +205,7 @@ private fun NabiRoot(resumeTick: Int) {
             confirmButton = {
                 TextButton(onClick = {
                     LedgerRepository.delete(e.id)
+                    Cloud.remove(e.id)
                     pendingDelete = null
                 }) { Text("지우기", color = Nabi.Red) }
             },

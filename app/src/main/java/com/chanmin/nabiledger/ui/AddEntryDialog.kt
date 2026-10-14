@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,7 +50,7 @@ import java.time.LocalDate
 fun AddEntryDialog(
     initialDay: Long,
     onDismiss: () -> Unit,
-    onSave: (day: Long, amount: Long, category: String, memo: String, isIncome: Boolean) -> Unit,
+    onSave: (day: Long, amount: Long, category: String, memo: String, isIncome: Boolean, hidden: Boolean) -> Unit,
 ) {
     val today = LocalDate.now().toEpochDay()
     var isIncome by remember { mutableStateOf(false) }
@@ -56,6 +58,7 @@ fun AddEntryDialog(
     var amountText by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(Categories.expense.first().name) }
     var memo by remember { mutableStateOf("") }
+    var hidden by remember { mutableStateOf(false) }
     val amount = amountText.toLongOrNull() ?: 0L
     val cats = if (isIncome) Categories.income else Categories.expense
     val chipColors = FilterChipDefaults.filterChipColors(
@@ -158,11 +161,27 @@ fun AddEntryDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("🙈 친구에게 숨기기", color = Nabi.Brown, fontWeight = FontWeight.SemiBold)
+                        Text("이 휴대폰에만 남고 공유되지 않아요", fontSize = 11.sp, color = Nabi.BrownSoft)
+                    }
+                    Switch(
+                        checked = hidden,
+                        onCheckedChange = { hidden = it },
+                        colors = SwitchDefaults.colors(
+                            checkedTrackColor = Nabi.Orange, checkedThumbColor = Nabi.Fur,
+                            uncheckedTrackColor = Nabi.CreamDeep, uncheckedThumbColor = Nabi.BrownSoft,
+                            uncheckedBorderColor = Nabi.CreamDeep,
+                        ),
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(day, amount, category, memo, isIncome) },
+                onClick = { onSave(day, amount, category, memo, isIncome, hidden) },
                 enabled = amount > 0
             ) { Text("저장할래냥", fontWeight = FontWeight.Bold) }
         },
