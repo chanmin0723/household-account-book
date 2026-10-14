@@ -29,6 +29,20 @@
             android:name=".notify.ReminderReceiver"
             android:exported="false" />
 
+        <service
+            android:name=".capture.PaymentListener"
+            android:exported="true"
+            android:label="나비 가계부 결제 감지"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".capture.CaptureActionReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".notify.BootReceiver"
             android:exported="true">

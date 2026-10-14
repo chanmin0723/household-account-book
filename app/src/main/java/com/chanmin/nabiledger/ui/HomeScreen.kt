@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chanmin.nabiledger.data.AppSettings
 import com.chanmin.nabiledger.data.Entry
+import com.chanmin.nabiledger.data.LedgerRepository
 import com.chanmin.nabiledger.logic.Fmt
 import com.chanmin.nabiledger.logic.Mood
 import com.chanmin.nabiledger.logic.Stats
@@ -60,6 +62,7 @@ fun HomeScreen(
     val usual = Stats.usualDaily(entries, today)
     val monthSpent = Stats.expenseBetween(entries, todayDate.withDayOfMonth(1).toEpochDay(), today)
     val todayEntries = entries.filter { it.epochDay == today }.sortedByDescending { it.createdAt }
+    val pending by LedgerRepository.pending.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -71,6 +74,10 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { CatHero(verdict) }
+        if (pending.isNotEmpty()) {
+            item { SectionTitle("🐾 기록할까냥?", "결제 알림 ${pending.size}건") }
+            items(pending.sortedByDescending { it.postedAt }, key = { "p${it.id}" }) { PendingCard(it) }
+        }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatTile(

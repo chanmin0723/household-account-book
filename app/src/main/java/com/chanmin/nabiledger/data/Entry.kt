@@ -70,4 +70,39 @@ data class AppSettings(
     val overspendAlert: Boolean = true,
     /** 평소(최근 30일 하루 평균)의 몇 배를 넘으면 경고할지 */
     val threshold: Float = 1.5f,
+    /** 결제 알림을 읽어 기록 후보로 만들기 */
+    val captureEnabled: Boolean = true,
+    /** 확인 없이 바로 기록 */
+    val captureAutoSave: Boolean = false,
 )
+
+/** 결제 알림에서 감지했지만 아직 확인하지 않은 기록 */
+data class PendingCapture(
+    val id: Long,
+    val epochDay: Long,
+    val amount: Long,
+    val merchant: String,
+    val category: String,
+    val isIncome: Boolean,
+    val postedAt: Long,
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id); put("day", epochDay); put("amount", amount); put("merchant", merchant)
+        put("category", category); put("income", isIncome); put("postedAt", postedAt)
+    }
+
+    companion object {
+        fun fromJson(o: JSONObject) = PendingCapture(
+            id = o.getLong("id"),
+            epochDay = o.getLong("day"),
+            amount = o.getLong("amount"),
+            merchant = o.optString("merchant", ""),
+            category = o.optString("category", "기타"),
+            isIncome = o.optBoolean("income", false),
+            postedAt = o.optLong("postedAt", 0L),
+        )
+    }
+}
+
+/** 설정 화면에서 보는 '최근 읽은 결제 알림' (파서 확인용, 기기 안에만 저장) */
+data class CaptureLog(val at: Long, val text: String, val result: String)

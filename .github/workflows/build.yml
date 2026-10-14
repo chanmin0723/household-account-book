@@ -25,7 +25,7 @@ jobs:
             echo "No GOOGLE_SERVICES_JSON secret — building without friend features"
           fi
       - name: Build debug APK
-        run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+        run: chmod +x gradlew && ./gradlew testDebugUnitTest assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: nabi-ledger-debug-apk

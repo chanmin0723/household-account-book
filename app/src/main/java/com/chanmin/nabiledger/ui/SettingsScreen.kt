@@ -149,6 +149,7 @@ fun SettingsScreen(settings: AppSettings, resumeTick: Int, padding: PaddingValue
                 }
             }
         }
+        item { CaptureSettingsCard(settings, resumeTick) { f -> update(f) } }
         item {
             WhiteCard {
                 Text("🧪 알림 미리보기", fontWeight = FontWeight.Bold, color = Nabi.Brown)
