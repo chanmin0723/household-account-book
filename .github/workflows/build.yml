@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,3 +33,14 @@ jobs:
         with:
           name: nabi-ledger-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Publish release (no login needed to download)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk nabi-ledger.apk
+          TAG="v1.0.${{ github.run_number }}"
+          gh release create "$TAG" nabi-ledger.apk \
+            --title "나비 가계부 $TAG" \
+            --notes "커밋: ${{ github.sha }}" \
+            --latest
+        env:
+          GH_TOKEN: ${{ github.token }}

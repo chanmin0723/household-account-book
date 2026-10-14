@@ -2,6 +2,10 @@
 
 삼색 고양이 나비가 지켜보는 Android 가계부 앱 (Kotlin + Jetpack Compose).
 
+## 📥 설치 (로그인 필요 없음)
+휴대폰에서 이 링크를 열면 최신 버전이 바로 받아져요:
+https://github.com/chanmin0723/household-account-book/releases/latest/download/nabi-ledger.apk
+
 ## 기능
 - **오늘 탭**: 나비가 오늘 지출을 보고 표정과 말풍선으로 반응 (궁금 / 기쁨 / 평온 / 걱정 / 깜짝)
   - 오늘 지출 · 평소 하루 · 이번 달 합계

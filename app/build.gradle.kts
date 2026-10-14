@@ -17,8 +17,10 @@ android {
         applicationId = "com.chanmin.nabiledger"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI 실행 번호로 버전을 올려 업데이트 설치가 자연스럽게 되도록
+        val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = run
+        versionName = "1.0.$run"
     }
 
     // 빌드할 때마다 서명키가 바뀌면 업데이트 설치가 막히므로 고정 키 사용 (개인용 debug 키)
