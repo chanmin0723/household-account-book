@@ -36,7 +36,7 @@ object Capture {
             }
             return
         }
-        if (LedgerRepository.isDuplicateCapture(parsed.amount, postedAt)) {
+        if (LedgerRepository.isDuplicateCapture(parsed.amount, parsed.isIncome, postedAt)) {
             LedgerRepository.logCapture(raw, "중복이라 건너뜀")
             return
         }

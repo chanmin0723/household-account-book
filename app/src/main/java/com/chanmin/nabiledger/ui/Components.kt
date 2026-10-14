@@ -1,6 +1,7 @@
 package com.chanmin.nabiledger.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,8 +98,10 @@ fun EntryRow(
     e: Entry,
     onDelete: ((Entry) -> Unit)? = null,
     onToggleHidden: ((Entry) -> Unit)? = null,
+    onEdit: ((Entry) -> Unit)? = null,
 ) {
     Card(
+        modifier = if (onEdit != null) Modifier.clickable { onEdit(e) } else Modifier,
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = if (e.hidden) Nabi.Peach else Color.White),
     ) {

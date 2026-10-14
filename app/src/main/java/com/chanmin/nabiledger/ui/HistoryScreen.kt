@@ -57,6 +57,7 @@ fun HistoryScreen(
     onSelectDay: (Long) -> Unit,
     onDelete: (Entry) -> Unit,
     onToggleHidden: (Entry) -> Unit,
+    onEdit: (Entry) -> Unit,
 ) {
     val today = LocalDate.now().toEpochDay()
     var month by remember { mutableStateOf(YearMonth.from(LocalDate.ofEpochDay(selectedDay))) }
@@ -164,7 +165,7 @@ fun HistoryScreen(
         if (dayEntries.isEmpty()) {
             item { EmptyNote(if (selectedDay > today) "아직 오지 않은 날이다냥 🌙" else "이 날은 기록이 없다냥") }
         } else {
-            items(dayEntries, key = { it.id }) { EntryRow(it, onDelete, onToggleHidden) }
+            items(dayEntries, key = { it.id }) { EntryRow(it, onDelete, onToggleHidden, onEdit) }
         }
     }
 }

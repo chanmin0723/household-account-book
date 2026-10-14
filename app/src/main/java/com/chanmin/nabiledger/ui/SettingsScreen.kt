@@ -149,6 +149,17 @@ fun SettingsScreen(settings: AppSettings, resumeTick: Int, padding: PaddingValue
                 }
             }
         }
+        item {
+            WhiteCard {
+                SettingRow("📌 실시간 지출 알림", "알림창에 오늘·이번 달 지출을 계속 띄워둬요. 기록할 때마다 바로 바뀌어요") {
+                    Switch(
+                        checked = settings.liveStatus,
+                        onCheckedChange = { on -> update { it.copy(liveStatus = on) } },
+                        colors = switchColors,
+                    )
+                }
+            }
+        }
         item { CaptureSettingsCard(settings, resumeTick) { f -> update(f) } }
         item {
             WhiteCard {

@@ -9,7 +9,13 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         LedgerRepository.init(context)
         Notifier.createChannels(context)
+        if (intent.action == ReminderScheduler.ACTION_MIDNIGHT) {
+            LiveStatus.update(context)
+            ReminderScheduler.scheduleMidnight(context)
+            return
+        }
         Notifier.postDailyReminder(context)
+        LiveStatus.update(context)
         ReminderScheduler.schedule(context)
     }
 }

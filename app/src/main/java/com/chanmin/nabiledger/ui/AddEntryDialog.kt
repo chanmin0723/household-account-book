@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chanmin.nabiledger.data.Categories
 import com.chanmin.nabiledger.data.Category
+import com.chanmin.nabiledger.data.Entry
 import com.chanmin.nabiledger.logic.Fmt
 import java.time.LocalDate
 
@@ -51,14 +52,16 @@ fun AddEntryDialog(
     initialDay: Long,
     onDismiss: () -> Unit,
     onSave: (day: Long, amount: Long, category: String, memo: String, isIncome: Boolean, hidden: Boolean) -> Unit,
+    /** null이 아니면 이 기록을 수정 */
+    editing: Entry? = null,
 ) {
     val today = LocalDate.now().toEpochDay()
-    var isIncome by remember { mutableStateOf(false) }
-    var day by remember { mutableLongStateOf(minOf(initialDay, today)) }
-    var amountText by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(Categories.expense.first().name) }
-    var memo by remember { mutableStateOf("") }
-    var hidden by remember { mutableStateOf(false) }
+    var isIncome by remember { mutableStateOf(editing?.isIncome ?: false) }
+    var day by remember { mutableLongStateOf(editing?.epochDay ?: minOf(initialDay, today)) }
+    var amountText by remember { mutableStateOf(editing?.amount?.toString() ?: "") }
+    var category by remember { mutableStateOf(editing?.category ?: Categories.expense.first().name) }
+    var memo by remember { mutableStateOf(editing?.memo ?: "") }
+    var hidden by remember { mutableStateOf(editing?.hidden ?: false) }
     val amount = amountText.toLongOrNull() ?: 0L
     val cats = if (isIncome) Categories.income else Categories.expense
     val chipColors = FilterChipDefaults.filterChipColors(
@@ -71,7 +74,9 @@ fun AddEntryDialog(
         containerColor = Nabi.Cream,
         title = {
             Text(
-                if (isIncome) "💰 들어온 돈" else "🐾 나간 돈",
+                (if (editing != null) "✏️ " else "") +
+                    (if (isIncome) "💰 들어온 돈" else "🐾 나간 돈") +
+                    (if (editing != null) " 수정" else ""),
                 fontWeight = FontWeight.Bold, color = Nabi.Brown
             )
         },
@@ -183,7 +188,7 @@ fun AddEntryDialog(
             TextButton(
                 onClick = { onSave(day, amount, category, memo, isIncome, hidden) },
                 enabled = amount > 0
-            ) { Text("저장할래냥", fontWeight = FontWeight.Bold) }
+            ) { Text(if (editing != null) "고칠래냥" else "저장할래냥", fontWeight = FontWeight.Bold) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("취소") }

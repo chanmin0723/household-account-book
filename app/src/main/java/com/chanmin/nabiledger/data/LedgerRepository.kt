@@ -73,6 +73,15 @@ object LedgerRepository {
         return entry
     }
 
+    /** 기존 기록 수정 (id·createdAt 유지) */
+    @Synchronized
+    fun update(entry: Entry): Entry {
+        val list = _entries.value.map { if (it.id == entry.id) entry else it }
+        saveEntries(list)
+        _entries.value = list
+        return entry
+    }
+
     @Synchronized
     fun setHidden(id: Long, hidden: Boolean): Entry? {
         var changed: Entry? = null
@@ -103,6 +112,7 @@ object LedgerRepository {
             threshold = prefs.getFloat("threshold", d.threshold),
             captureEnabled = prefs.getBoolean("captureEnabled", d.captureEnabled),
             captureAutoSave = prefs.getBoolean("captureAutoSave", d.captureAutoSave),
+            liveStatus = prefs.getBoolean("liveStatus", d.liveStatus),
         )
     }
 
@@ -117,6 +127,7 @@ object LedgerRepository {
             .putFloat("threshold", s.threshold)
             .putBoolean("captureEnabled", s.captureEnabled)
             .putBoolean("captureAutoSave", s.captureAutoSave)
+            .putBoolean("liveStatus", s.liveStatus)
             .apply()
         _settings.value = s
     }
@@ -148,11 +159,13 @@ object LedgerRepository {
 
     /** 같은 금액이 3분 안에 이미 감지·기록됐으면 중복(문자+앱푸시 동시 수신 등) */
     @Synchronized
-    fun isDuplicateCapture(amount: Long, postedAt: Long): Boolean {
+    fun isDuplicateCapture(amount: Long, isIncome: Boolean, postedAt: Long): Boolean {
         val window = 3 * 60 * 1000L
-        val inPending = _pending.value.any { it.amount == amount && kotlin.math.abs(it.postedAt - postedAt) < window }
+        val inPending = _pending.value.any {
+            it.amount == amount && it.isIncome == isIncome && kotlin.math.abs(it.postedAt - postedAt) < window
+        }
         val inEntries = _entries.value.any {
-            it.amount == amount && kotlin.math.abs(it.createdAt - postedAt) < window
+            it.amount == amount && it.isIncome == isIncome && kotlin.math.abs(it.createdAt - postedAt) < window
         }
         return inPending || inEntries
     }

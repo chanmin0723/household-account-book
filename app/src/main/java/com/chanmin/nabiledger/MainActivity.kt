@@ -52,6 +52,7 @@ import com.chanmin.nabiledger.data.Entry
 import com.chanmin.nabiledger.data.LedgerRepository
 import com.chanmin.nabiledger.logic.Fmt
 import com.chanmin.nabiledger.logic.Stats
+import com.chanmin.nabiledger.notify.LiveStatus
 import com.chanmin.nabiledger.notify.Notifier
 import com.chanmin.nabiledger.notify.ReminderScheduler
 import com.chanmin.nabiledger.ui.AddEntryDialog
@@ -81,6 +82,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumeTick.intValue++
         ReminderScheduler.schedule(this)
+        LiveStatus.update(this)
     }
 }
 
@@ -92,6 +94,7 @@ private fun NabiRoot(resumeTick: Int) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showAdd by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<Entry?>(null) }
+    var editing by remember { mutableStateOf<Entry?>(null) }
     var selectedDay by remember { mutableLongStateOf(LocalDate.now().toEpochDay()) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -162,6 +165,7 @@ private fun NabiRoot(resumeTick: Int) {
                 entries, settings, padding,
                 onDelete = { pendingDelete = it },
                 onToggleHidden = toggleHidden,
+                onEdit = { editing = it },
             )
             1 -> HistoryScreen(
                 entries, settings, padding,
@@ -169,6 +173,7 @@ private fun NabiRoot(resumeTick: Int) {
                 onSelectDay = { selectedDay = it },
                 onDelete = { pendingDelete = it },
                 onToggleHidden = toggleHidden,
+                onEdit = { editing = it },
             )
             2 -> FriendsScreen(padding)
             else -> SettingsScreen(settings, resumeTick, padding)
@@ -192,6 +197,26 @@ private fun NabiRoot(resumeTick: Int) {
                         scope.launch { snackbar.showSnackbar("냥?! 오늘 평소보다 많이 썼다냥! 😿") }
                     }
                 }
+            },
+        )
+    }
+
+    editing?.let { old ->
+        AddEntryDialog(
+            initialDay = old.epochDay,
+            editing = old,
+            onDismiss = { editing = null },
+            onSave = { day, amount, category, memo, isIncome, hidden ->
+                val updated = LedgerRepository.update(
+                    old.copy(
+                        epochDay = day, amount = amount, category = category,
+                        memo = memo.trim(), isIncome = isIncome, hidden = hidden,
+                    )
+                )
+                Cloud.push(updated)
+                editing = null
+                Notifier.maybeAlertOverspend(ctx)
+                scope.launch { snackbar.showSnackbar("✏️ 고쳤다냥") }
             },
         )
     }

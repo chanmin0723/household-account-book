@@ -76,6 +76,8 @@ data class AppSettings(
     val captureEnabled: Boolean = true,
     /** 확인 없이 바로 기록 */
     val captureAutoSave: Boolean = false,
+    /** 알림창에 오늘/이번 달 지출을 실시간으로 띄우기 */
+    val liveStatus: Boolean = true,
 )
 
 /** 결제 알림에서 감지했지만 아직 확인하지 않은 기록 */

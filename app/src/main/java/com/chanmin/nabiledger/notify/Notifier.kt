@@ -40,6 +40,13 @@ object Notifier {
                 .apply { description = "평소보다 많이 쓰면 나비가 알려줘요" }
         )
         nm.createNotificationChannel(
+            NotificationChannel(LiveStatus.CHANNEL, "실시간 지출", NotificationManager.IMPORTANCE_LOW)
+                .apply {
+                    description = "오늘/이번 달 지출을 알림창에 계속 보여줘요"
+                    setShowBadge(false)
+                }
+        )
+        nm.createNotificationChannel(
             NotificationChannel(CH_CAPTURE, "결제 알림 감지", NotificationManager.IMPORTANCE_DEFAULT)
                 .apply { description = "결제 알림을 읽고 기록할지 물어봐요" }
         )
