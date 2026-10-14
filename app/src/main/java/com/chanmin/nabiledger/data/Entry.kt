@@ -78,6 +78,8 @@ data class AppSettings(
     val captureAutoSave: Boolean = false,
     /** 알림창에 오늘/이번 달 지출을 실시간으로 띄우기 */
     val liveStatus: Boolean = true,
+    /** 자동 업데이트: 0 끄기, 1 Wi-Fi에서만, 2 Wi-Fi+데이터 */
+    val autoUpdate: Int = 1,
 )
 
 /** 결제 알림에서 감지했지만 아직 확인하지 않은 기록 */

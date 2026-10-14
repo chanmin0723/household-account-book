@@ -26,6 +26,8 @@ object Notifier {
     const val CH_REMINDER = "daily_reminder"
     const val CH_OVERSPEND = "overspend"
     const val CH_CAPTURE = "capture"
+    const val CH_UPDATE = "app_update"
+    const val ID_UPDATE = 2003
     const val ID_REMINDER = 2001
     const val ID_OVERSPEND = 2002
 
@@ -45,6 +47,10 @@ object Notifier {
                     description = "오늘/이번 달 지출을 알림창에 계속 보여줘요"
                     setShowBadge(false)
                 }
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CH_UPDATE, "앱 업데이트", NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = "새 버전 설치 소식" }
         )
         nm.createNotificationChannel(
             NotificationChannel(CH_CAPTURE, "결제 알림 감지", NotificationManager.IMPORTANCE_DEFAULT)
@@ -72,6 +78,20 @@ object Notifier {
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(ctx).notify(id, n)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun postWithIntent(ctx: Context, channel: String, id: Int, title: String, text: String, pi: PendingIntent) {
+        if (!canPost(ctx)) return
+        val n = NotificationCompat.Builder(ctx, channel)
+            .setSmallIcon(R.drawable.ic_paw)
+            .setColor(0xFFD9813A.toInt())
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(pi)
             .setAutoCancel(true)
             .build()

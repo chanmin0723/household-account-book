@@ -113,6 +113,7 @@ object LedgerRepository {
             captureEnabled = prefs.getBoolean("captureEnabled", d.captureEnabled),
             captureAutoSave = prefs.getBoolean("captureAutoSave", d.captureAutoSave),
             liveStatus = prefs.getBoolean("liveStatus", d.liveStatus),
+            autoUpdate = prefs.getInt("autoUpdate", d.autoUpdate),
         )
     }
 
@@ -128,6 +129,7 @@ object LedgerRepository {
             .putBoolean("captureEnabled", s.captureEnabled)
             .putBoolean("captureAutoSave", s.captureAutoSave)
             .putBoolean("liveStatus", s.liveStatus)
+            .putInt("autoUpdate", s.autoUpdate)
             .apply()
         _settings.value = s
     }

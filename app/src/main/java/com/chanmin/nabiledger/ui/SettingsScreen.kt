@@ -160,6 +160,7 @@ fun SettingsScreen(settings: AppSettings, resumeTick: Int, padding: PaddingValue
                 }
             }
         }
+        item { UpdateSettingsCard(settings, resumeTick) { f -> update(f) } }
         item { CaptureSettingsCard(settings, resumeTick) { f -> update(f) } }
         item {
             WhiteCard {

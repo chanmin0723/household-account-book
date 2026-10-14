@@ -78,9 +78,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        com.chanmin.nabiledger.update.Updater.foreground = false
+    }
+
     override fun onResume() {
         super.onResume()
         resumeTick.intValue++
+        com.chanmin.nabiledger.update.Updater.foreground = true
         ReminderScheduler.schedule(this)
         LiveStatus.update(this)
     }
@@ -105,6 +111,7 @@ private fun NabiRoot(resumeTick: Int) {
             permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         Cloud.syncAll(LedgerRepository.entries.value)
+        com.chanmin.nabiledger.update.Updater.checkOnOpen(ctx)
     }
 
     val toggleHidden: (Entry) -> Unit = { e ->

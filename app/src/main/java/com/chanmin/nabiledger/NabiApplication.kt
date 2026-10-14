@@ -15,5 +15,6 @@ class NabiApplication : Application() {
         Notifier.createChannels(this)
         ReminderScheduler.schedule(this)
         LiveStatus.start(this)
+        com.chanmin.nabiledger.update.Updater.schedule(this)
     }
 }
