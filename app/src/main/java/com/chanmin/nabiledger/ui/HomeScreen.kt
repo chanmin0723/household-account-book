@@ -103,6 +103,7 @@ fun HomeScreen(
         if (usual != null && usual > 0L) {
             item { Gauge(spent, usual, settings.threshold) }
         }
+        item { WeeklyCard(all, today, usual, settings.threshold) }
         item { SectionTitle("오늘 기록", "눌러서 수정 · " + Fmt.dayLabel(today)) }
         if (todayEntries.isEmpty()) {
             item { EmptyNote("아직 오늘 기록이 없다냥.\n아래 + 버튼으로 적어줘냥 🐾") }

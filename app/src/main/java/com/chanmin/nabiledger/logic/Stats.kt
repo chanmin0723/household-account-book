@@ -1,11 +1,28 @@
 package com.chanmin.nabiledger.logic
 
 import com.chanmin.nabiledger.data.Entry
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 enum class Mood { CURIOUS, HAPPY, CALM, WORRIED, SHOCKED }
 
 data class Verdict(val mood: Mood, val message: String)
+
+/**
+ * 한 주(월~일) 요약.
+ * - daily: 월요일부터 7칸, 오늘 이후 날짜는 0
+ * - compare: 지난주 '같은 기간'(이번 주면 월~오늘 요일까지, 지난 주들은 7일 전체) 지출
+ */
+data class WeekSummary(
+    val start: Long,
+    val daily: List<Long>,
+    val total: Long,
+    val income: Long,
+    val compare: Long,
+    val daysCounted: Int,
+    val isCurrent: Boolean,
+    val byCategory: List<Pair<String, Long>>,
+)
 
 /**
  * "평소" = 최근 30일(오늘 제외) 하루 평균 지출.
@@ -93,5 +110,70 @@ object Stats {
         if (!hasToday) return "오늘 가계부 썼냥? 🐾" to "아직 오늘 기록이 없다냥. 잊기 전에 적어두자냥!"
         val spent = expenseOn(entries, today)
         return "오늘의 나비 정산 🐾" to "오늘 ${Fmt.won(spent)} — ${verdict(entries, today, threshold).message}"
+    }
+
+    // ---------- 주간 ----------
+
+    /** 그 날이 속한 주의 월요일 */
+    fun weekStart(day: Long): Long {
+        val d = LocalDate.ofEpochDay(day)
+        return day - (d.dayOfWeek.value - 1)
+    }
+
+    fun week(entries: List<Entry>, anyDay: Long, today: Long): WeekSummary {
+        val start = weekStart(anyDay)
+        val isCurrent = start == weekStart(today)
+        val lastDay = if (isCurrent) today else start + 6
+        val daysCounted = (lastDay - start + 1).toInt()
+        val daily = (0 until 7).map { i ->
+            val d = start + i
+            if (d > lastDay) 0L else expenseOn(entries, d)
+        }
+        val inWeek = entries.filter { it.epochDay in start..lastDay }
+        val byCategory = inWeek.filter { !it.isIncome }
+            .groupBy { it.category }
+            .mapValues { (_, l) -> l.sumOf { it.amount } }
+            .toList()
+            .sortedByDescending { it.second }
+        val prevStart = start - 7
+        return WeekSummary(
+            start = start,
+            daily = daily,
+            total = daily.sum(),
+            income = inWeek.filter { it.isIncome }.sumOf { it.amount },
+            compare = expenseBetween(entries, prevStart, prevStart + daysCounted - 1),
+            daysCounted = daysCounted,
+            isCurrent = isCurrent,
+            byCategory = byCategory,
+        )
+    }
+
+    /** "지난주보다 12,000원 더 썼다냥 (↑15%)" 같은 한 줄 */
+    fun weekCompareText(w: WeekSummary): String {
+        val label = if (w.isCurrent && w.daysCounted < 7) "지난주 같은 기간" else "지난주"
+        if (w.compare == 0L) {
+            return if (w.total == 0L) "이번 주도 지난주도 아직 0원이다냥" else "$label 기록이 없어서 비교는 다음 주부터다냥"
+        }
+        val diff = w.total - w.compare
+        val pct = (kotlin.math.abs(diff) * 100.0 / w.compare).roundToInt()
+        return when {
+            diff > 0 -> "${label}보다 ${Fmt.won(diff)} 더 썼다냥 (↑$pct%)"
+            diff < 0 -> "${label}보다 ${Fmt.won(-diff)} 덜 썼다냥 (↓$pct%) ♡"
+            else -> "${label}랑 똑같이 썼다냥"
+        }
+    }
+
+    /** 일요일 밤 한 주 정산 알림 (제목, 본문) */
+    fun weeklyReport(entries: List<Entry>, today: Long): Pair<String, String> {
+        val w = week(entries, today, today)
+        val top = w.byCategory.take(3).joinToString(", ") { "${it.first} ${Fmt.won(it.second)}" }
+        val maxIdx = w.daily.indices.maxByOrNull { w.daily[it] } ?: 0
+        val days = listOf("월", "화", "수", "목", "금", "토", "일")
+        val body = buildString {
+            append(weekCompareText(w))
+            if (top.isNotEmpty()) append("\n많이 쓴 곳: ").append(top)
+            if (w.daily[maxIdx] > 0) append("\n가장 많이 쓴 날: ${days[maxIdx]}요일 ${Fmt.won(w.daily[maxIdx])}")
+        }
+        return "🐾 이번 주 ${Fmt.won(w.total)} 썼다냥" to body
     }
 }

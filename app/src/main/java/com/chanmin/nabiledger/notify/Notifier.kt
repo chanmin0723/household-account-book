@@ -30,6 +30,7 @@ object Notifier {
     const val ID_UPDATE = 2003
     const val ID_REMINDER = 2001
     const val ID_OVERSPEND = 2002
+    const val ID_WEEKLY = 2004
 
     fun createChannels(ctx: Context) {
         val nm = ctx.getSystemService(NotificationManager::class.java)
@@ -101,9 +102,16 @@ object Notifier {
     fun postDailyReminder(ctx: Context) {
         val today = LocalDate.now().toEpochDay()
         val (title, text) = Stats.reminder(
-            LedgerRepository.entries.value, today, LedgerRepository.settings.value.threshold
+            LedgerRepository.statsEntries(), today, LedgerRepository.settings.value.threshold
         )
         post(ctx, CH_REMINDER, ID_REMINDER, title, text)
+    }
+
+    /** 한 주 정산 (일요일 알림 시간 / 설정의 미리보기) */
+    fun postWeeklyReport(ctx: Context) {
+        val today = LocalDate.now().toEpochDay()
+        val (title, text) = Stats.weeklyReport(LedgerRepository.statsEntries(), today)
+        post(ctx, CH_REMINDER, ID_WEEKLY, title, text)
     }
 
     /** 오늘 처음으로 경고선을 넘었을 때 하루 한 번 알림 */

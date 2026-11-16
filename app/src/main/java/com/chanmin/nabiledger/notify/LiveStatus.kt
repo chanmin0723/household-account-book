@@ -63,10 +63,12 @@ object LiveStatus {
         val spent = Stats.expenseOn(entries, today)
         val month = Stats.expenseBetween(entries, todayDate.withDayOfMonth(1).toEpochDay(), today)
         val usual = Stats.usualDaily(entries, today)
+        val week = Stats.expenseBetween(entries, Stats.weekStart(today), today)
         val verdict = Stats.verdict(entries, today, s.threshold)
 
-        val ratio = if (usual != null && usual > 0) " (평소의 ${spent * 100 / usual}%)" else ""
-        val title = "${emoji(verdict.mood)} 오늘 ${Fmt.won(spent)}$ratio · 이번 달 ${Fmt.won(month)}"
+        val ratio = if (usual != null && usual > 0) "평소의 ${spent * 100 / usual}% · " else ""
+        val title = "${emoji(verdict.mood)} 오늘 ${Fmt.won(spent)} · 이번 주 ${Fmt.won(week)} · 이번 달 ${Fmt.won(month)}"
+        val body = ratio + verdict.message
 
         val open = PendingIntent.getActivity(
             ctx, ID,
@@ -79,8 +81,8 @@ object LiveStatus {
             .setSmallIcon(R.drawable.ic_paw)
             .setColor(0xFFD9813A.toInt())
             .setContentTitle(title)
-            .setContentText(verdict.message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(verdict.message))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(open)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

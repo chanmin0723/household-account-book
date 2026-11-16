@@ -160,6 +160,20 @@ fun SettingsScreen(settings: AppSettings, resumeTick: Int, padding: PaddingValue
                 }
             }
         }
+        item {
+            WhiteCard {
+                SettingRow(
+                    "📅 주간 정산",
+                    "일요일 ${Fmt.timeLabel(settings.reminderHour, settings.reminderMinute)}에 한 주 동안 쓴 돈을 알려줘요"
+                ) {
+                    Switch(
+                        checked = settings.weeklyReport,
+                        onCheckedChange = { on -> update { it.copy(weeklyReport = on) } },
+                        colors = switchColors,
+                    )
+                }
+            }
+        }
         item { UpdateSettingsCard(settings, resumeTick) { f -> update(f) } }
         item { CaptureSettingsCard(settings, resumeTick) { f -> update(f) } }
         item {
@@ -170,6 +184,10 @@ fun SettingsScreen(settings: AppSettings, resumeTick: Int, padding: PaddingValue
                     onClick = { Notifier.postDailyReminder(ctx) },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("지금 알림 보내보기") }
+                OutlinedButton(
+                    onClick = { Notifier.postWeeklyReport(ctx) },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("주간 정산 알림 보내보기") }
             }
         }
         item {

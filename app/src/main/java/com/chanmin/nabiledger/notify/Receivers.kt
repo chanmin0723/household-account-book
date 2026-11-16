@@ -15,6 +15,11 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
         Notifier.postDailyReminder(context)
+        if (LedgerRepository.settings.value.weeklyReport &&
+            java.time.LocalDate.now().dayOfWeek == java.time.DayOfWeek.SUNDAY
+        ) {
+            Notifier.postWeeklyReport(context)
+        }
         LiveStatus.update(context)
         ReminderScheduler.schedule(context)
     }

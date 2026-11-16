@@ -120,6 +120,7 @@ object LedgerRepository {
             captureAutoSave = prefs.getBoolean("captureAutoSave", d.captureAutoSave),
             liveStatus = prefs.getBoolean("liveStatus", d.liveStatus),
             autoUpdate = prefs.getInt("autoUpdate", d.autoUpdate),
+            weeklyReport = prefs.getBoolean("weeklyReport", d.weeklyReport),
         )
     }
 
@@ -136,6 +137,7 @@ object LedgerRepository {
             .putBoolean("captureAutoSave", s.captureAutoSave)
             .putBoolean("liveStatus", s.liveStatus)
             .putInt("autoUpdate", s.autoUpdate)
+            .putBoolean("weeklyReport", s.weeklyReport)
             .apply()
         _settings.value = s
     }
