@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
         com.chanmin.nabiledger.update.Updater.foreground = true
         ReminderScheduler.schedule(this)
         LiveStatus.update(this)
+        com.chanmin.nabiledger.capture.Capture.ensureConnected(this)
     }
 }
 

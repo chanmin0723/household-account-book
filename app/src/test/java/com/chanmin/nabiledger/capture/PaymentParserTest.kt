@@ -132,4 +132,24 @@ class PaymentParserTest {
         assertEquals("LG U+", p.merchant)
         assertEquals("생활", p.category)
     }
+
+    // ---------- 금액 표기 ----------
+
+    @Test fun wonSignAmount() {
+        val p = parse("[현대카드] ₩15,800 승인 쿠팡")!!
+        assertEquals(15_800L, p.amount)
+        assertEquals("쇼핑", p.category)
+    }
+
+    @Test fun krwAmount() {
+        assertEquals(9_900L, parse("KRW 9,900 결제 완료 넷플릭스")!!.amount)
+        assertEquals(9_900L, parse("결제 9,900 KRW 넷플릭스")!!.amount)
+    }
+
+    @Test fun whyNotExplains() {
+        assertTrue(PaymentParser.whyNot("승인취소 12,000원").contains("취소"))
+        assertTrue(PaymentParser.whyNot("오늘 점심 8,000원 어때").contains("단어"))
+        assertTrue(PaymentParser.hasAmount("₩3,000"))
+        assertFalse(PaymentParser.hasAmount("택배 도착"))
+    }
 }

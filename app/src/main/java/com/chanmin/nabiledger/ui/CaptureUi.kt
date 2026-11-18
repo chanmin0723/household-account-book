@@ -118,7 +118,10 @@ fun PendingCard(p: PendingCapture) {
 @Composable
 fun CaptureSettingsCard(settings: AppSettings, resumeTick: Int, update: ((AppSettings) -> AppSettings) -> Unit) {
     val ctx = LocalContext.current
+    var rebindTick by remember { mutableStateOf(0) }
     val enabled = remember(resumeTick) { Capture.listenerEnabled(ctx) }
+    val connected = remember(resumeTick, rebindTick) { Capture.listenerConnected(ctx) }
+    val connectedAt = remember(resumeTick, rebindTick) { Capture.lastConnectedAt(ctx) }
     var showLog by remember { mutableStateOf(false) }
     var logTick by remember { mutableStateOf(0) }
     val switchColors = SwitchDefaults.colors(
@@ -142,8 +145,20 @@ fun CaptureSettingsCard(settings: AppSettings, resumeTick: Int, update: ((AppSet
 
         if (settings.captureEnabled) {
             Spacer(Modifier.height(8.dp))
-            if (enabled) {
-                Text("✅ 알림 접근 허용됨", fontSize = 13.sp, color = Nabi.MintDeep)
+            if (enabled && connected) {
+                val since = if (connectedAt > 0)
+                    SimpleDateFormat("MM/dd HH:mm", Locale.KOREA).format(Date(connectedAt)) + "부터 " else ""
+                Text("✅ 알림 읽는 중 (${since}연결됨)", fontSize = 13.sp, color = Nabi.MintDeep)
+            } else if (enabled) {
+                Text(
+                    "⚠️ 권한은 켜져 있는데 휴대폰이 알림 읽기를 멈춰 놨어요. 아래 '다시 연결'을 눌러주세요.\n" +
+                        "자꾸 끊기면: 설정 > 배터리 > 백그라운드 사용 제한에서 나비 가계부를 '제한 없음'으로",
+                    fontSize = 12.sp, color = Nabi.OrangeDeep
+                )
+                TextButton(onClick = {
+                    Capture.forceRebind(ctx)
+                    rebindTick++
+                }) { Text("다시 연결") }
             } else {
                 Text(
                     "⚠️ 아직 알림 접근 권한이 없어요. 아래 버튼 → '나비 가계부 결제 감지'를 켜주세요.\n" +
@@ -158,6 +173,12 @@ fun CaptureSettingsCard(settings: AppSettings, resumeTick: Int, update: ((AppSet
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("확인 없이 바로 기록", color = Nabi.Brown)
+                    if (!settings.captureAutoSave) {
+                        Text(
+                            "지금은 홈의 '기록할까냥?'에서 [기록할래냥]을 눌러야 기록에 들어가요",
+                            fontSize = 11.sp, color = Nabi.OrangeDeep
+                        )
+                    }
                     Text(
                         "끄면 '기록할까냥?' 하고 먼저 물어봐요 (추천)",
                         fontSize = 11.sp, color = Nabi.BrownSoft

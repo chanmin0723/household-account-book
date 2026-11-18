@@ -31,6 +31,7 @@ class BootReceiver : BroadcastReceiver() {
         LedgerRepository.init(context)
         ReminderScheduler.schedule(context)
         LiveStatus.update(context)
+        com.chanmin.nabiledger.capture.Capture.requestRebind(context)
         if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             Notifier.createChannels(context)
             Notifier.post(

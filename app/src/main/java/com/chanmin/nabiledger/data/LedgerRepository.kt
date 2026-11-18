@@ -167,19 +167,6 @@ object LedgerRepository {
         pendingFile.writeText(arr.toString())
     }
 
-    /** 같은 금액이 3분 안에 이미 감지·기록됐으면 중복(문자+앱푸시 동시 수신 등) */
-    @Synchronized
-    fun isDuplicateCapture(amount: Long, isIncome: Boolean, postedAt: Long): Boolean {
-        val window = 3 * 60 * 1000L
-        val inPending = _pending.value.any {
-            it.amount == amount && it.isIncome == isIncome && kotlin.math.abs(it.postedAt - postedAt) < window
-        }
-        val inEntries = _entries.value.any {
-            it.amount == amount && it.isIncome == isIncome && kotlin.math.abs(it.createdAt - postedAt) < window
-        }
-        return inPending || inEntries
-    }
-
     @Synchronized
     fun addPending(day: Long, amount: Long, merchant: String, category: String, isIncome: Boolean, postedAt: Long): PendingCapture {
         val id = maxOf(System.currentTimeMillis(), (_pending.value.maxOfOrNull { it.id } ?: 0L) + 1)

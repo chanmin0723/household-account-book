@@ -12,7 +12,24 @@ data class ParsedPayment(
  * 순수 Kotlin이라 단위 테스트로 검증 (PaymentParserTest).
  */
 object PaymentParser {
-    private val amountRe = Regex("""(\d{1,3}(?:,\d{3})+|\d+)\s*원""")
+    private const val NUM = """(\d{1,3}(?:,\d{3})+|\d+)"""
+    /** "12,000원", "₩12,000", "KRW 12,000", "12,000 KRW" */
+    private val amountRe = Regex("""$NUM\s*원|(?:₩|￦|KRW)\s*$NUM|$NUM\s*KRW""")
+
+    private fun amountText(m: MatchResult): String =
+        (1..3).map { m.groupValues[it] }.first { it.isNotEmpty() }
+
+    /** 금액처럼 보이는 게 있는 알림인지 (진단 기록 대상) */
+    fun hasAmount(raw: String): Boolean = amountRe.containsMatchIn(raw)
+
+    /** parse()가 null일 때 그 이유 (설정 > 최근 읽은 알림에 표시) */
+    fun whyNot(raw: String): String {
+        val text = raw.replace('\u00A0', ' ').trim()
+        rejectKw.firstOrNull { it in text }?.let { return "'$it' 단어가 있어서 제외" }
+        val incoming = incomeKw.any { it in text } || (sentByOther.containsMatchIn(text) && "보냈" in text)
+        if (!incoming && spendKw.none { it in text }) return "결제·입금·송금 같은 단어가 없어서"
+        return "금액을 못 찾아서"
+    }
     private val timeRe = Regex("""\d{1,2}:\d{2}""")
     private val ws = Regex("""\s+""")
 
@@ -55,7 +72,7 @@ object PaymentParser {
             val before = text.substring(maxOf(0, mr.range.first - 6), mr.range.first)
             notTheAmount.none { it in before }
         } ?: return null
-        val amount = m.groupValues[1].replace(",", "").toLongOrNull() ?: return null
+        val amount = amountText(m).replace(",", "").toLongOrNull() ?: return null
         if (amount <= 0L || amount > 100_000_000L) return null
 
         val counterpart = if (isTransfer) counterpartOf(text) else null
